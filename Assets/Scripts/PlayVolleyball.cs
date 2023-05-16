@@ -26,17 +26,14 @@ public class PlayVolleyball : Agent
         ballInMyField = !ballInMyField;
     }
 
-    // private void Update(){
-    //     ballInMyField = field.tag == "field1" ? ball.transform.position.x < 0f : ball.transform.position.x > 0f;
-    // }
 
     public override void OnEpisodeBegin(){
         transform.position = initPosition;
         rb.velocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
+
         float randPosX = Random.Range(-6f,0f);
         float randPosZ = Random.Range(-5f,5f);
-        // transform.localPosition = initPosition + new Vector3(randPosX, 0f, randPosZ);
         transform.Translate(new Vector3(randPosX,0f,randPosZ));
         print(initPosition);
 
@@ -64,7 +61,6 @@ public class PlayVolleyball : Agent
         float jumpForce = 6.5f;
 
         Vector3 movement = new Vector3(moveX, 0f, moveZ) * moveSpeed * Time.deltaTime;
-        // transform.position += movement;
         transform.Translate(movement);
 
 
@@ -129,14 +125,3 @@ public class PlayVolleyball : Agent
     }
 
 }
-
-
-//modificar heuristicas para q sea bien manejable
-//meter prints en recompensas
-//hacer prueba
-//terminar episodio
-
-//reestablecer cambios en movimiento
-
-//bug de posiciones random ??
-//cada vez que reinnicia toma como que pasa la red

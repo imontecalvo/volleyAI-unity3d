@@ -29,33 +29,25 @@ public class BallCollision : MonoBehaviour
         playerAgent2 = player2.GetComponent<PlayVolleyball>();
 
 
-        initPos = transform.position;
+        initPos = transform.localPosition;
         rb = GetComponent<Rigidbody>();
         
-        player1InitPos = player1.transform.position;
+        player1InitPos = player1.transform.localPosition;
         player1Rb = player1.GetComponent<Rigidbody>();
 
-        player2InitPos = player2.transform.position;
+        player2InitPos = player2.transform.localPosition;
         player2Rb = player2.GetComponent<Rigidbody>();
     }
 
     private void OnCollisionEnter(Collision other) {
         string tag = other.gameObject.tag;
         if (tag == "field1" || tag =="field2"){
-            // player1.transform.position = player1InitPos;
-            // player1Rb.velocity = Vector3.zero;
-            // player1Rb.angularVelocity = Vector3.zero;
-
-            // player2.transform.position = player2InitPos;
-            // player2Rb.velocity = Vector3.zero;
-            // player2Rb.angularVelocity = Vector3.zero;
 
             float randPosX = Random.Range(0f,6f);
             float randPosZ = Random.Range(-3f,3f);
             float xPos = tag == "field2" ? player1InitPos.x+randPosX : player2InitPos.x-randPosX;
             transform.localPosition = new Vector3(xPos,initPos.y,randPosZ);
 
-            //transform.position = initPos;
             rb.velocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
 
