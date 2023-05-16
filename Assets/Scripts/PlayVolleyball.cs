@@ -7,19 +7,41 @@ using Unity.MLAgents.Sensors;
 
 public class PlayVolleyball : Agent
 {
+    [SerializeField] private GameObject field;
+    bool ballInMyField;
+
     [SerializeField] private Transform opponentTransform;
     [SerializeField] private GameObject ball;
     [SerializeField] private Transform netTransform;
     bool isJumping = false;
     private Rigidbody rb;
 
+    private Vector3 initPosition;
+
     private void Start() {
+        initPosition = transform.localPosition;
         rb = GetComponent<Rigidbody>();
+        ballInMyField = field.tag == "field1" ? ball.transform.localPosition.x < 0f : ball.transform.localPosition.x > 0f;
+        //lo invierto para que empiece bien en OnEpisodeBegin()
+        ballInMyField = !ballInMyField;
     }
 
+    // private void Update(){
+    //     ballInMyField = field.tag == "field1" ? ball.transform.position.x < 0f : ball.transform.position.x > 0f;
+    // }
+
     public override void OnEpisodeBegin(){
-        // transform.localPosition = new Vector3(Random.Range(-4f,4f),0,Random.Range(-3f,3f));;
-        // targetTransform.localPosition = new Vector3(Random.Range(5f,9f),0,Random.Range(-3f,3f));
+        transform.position = initPosition;
+        rb.velocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+        float randPosX = Random.Range(-6f,0f);
+        float randPosZ = Random.Range(-5f,5f);
+        // transform.localPosition = initPosition + new Vector3(randPosX, 0f, randPosZ);
+        transform.Translate(new Vector3(randPosX,0f,randPosZ));
+        print(initPosition);
+
+        //al comienzo del episodio cambio al valor opuesto (si el punto del ep anterior fue en mi cancha ahora la pelota aparece en el otro lado)
+        ballInMyField = !ballInMyField;
     }
 
     public override void CollectObservations(VectorSensor sensor){
@@ -42,6 +64,7 @@ public class PlayVolleyball : Agent
         float jumpForce = 6.5f;
 
         Vector3 movement = new Vector3(moveX, 0f, moveZ) * moveSpeed * Time.deltaTime;
+        // transform.position += movement;
         transform.Translate(movement);
 
 
@@ -50,10 +73,30 @@ public class PlayVolleyball : Agent
             rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
             isJumping = true;
         }
+
+        // Ball went over the net -> Reward 15
+        bool prevBallField = ballInMyField;
+        ballInMyField = field.tag == "field1" ? ball.transform.localPosition.x < 0f : ball.transform.localPosition.x > 0f;
+        if ((ballInMyField != prevBallField) && !ballInMyField){
+            // print("Pasa red " + gameObject.name);
+            AddReward(15f);
+        }
+
+        // Distance to ball -> Reward [-2,2]
+        if (ballInMyField){
+            float MAX_DIST = 22f;
+            float distanceToBall = Vector3.Distance(transform.localPosition, ball.transform.localPosition);
+            float reward = 4*((-distanceToBall/MAX_DIST)+1)-2;
+            // print("Distancia pelota " + distanceToBall + "rw: " + reward);
+            AddReward(reward);
+        }
     }
 
     public override void Heuristic(in ActionBuffers actionsOut){
         ActionSegment<float> continuousActions = actionsOut.ContinuousActions;
+        // continuousActions[0] = Input.GetAxisRaw("Horizontal");
+        // continuousActions[1] = Input.GetAxisRaw("Vertical");
+
         continuousActions[1] = -Input.GetAxisRaw("Horizontal");
         continuousActions[0] = Input.GetAxisRaw("Vertical");
 
@@ -66,26 +109,34 @@ public class PlayVolleyball : Agent
 
     }
 
-    private void OnTriggerEnter(Collider other){
-        // if (other.gameObject.tag == "Goal"){
-        //     SetReward(1f);
-        //     print("win");
-        //     floorMeshRenderer.material = winMaterial;
-        //     EndEpisode();
-        // }
-
-        // if (other.gameObject.tag == "Wall"){
-        //     SetReward(-1f);
-        //     floorMeshRenderer.material = loseMaterial;
-        //     EndEpisode();
-        // }
-
-    }
-
     private void OnCollisionEnter(Collision other){
         string tag = other.gameObject.tag;
         if (tag == "field1" || tag == "field2"){
             isJumping = false;
         }
+
+        else if (tag == "ball"){
+            float hitBallRw = 7;
+            // print("Golpeo pelota " + gameObject.name);
+            AddReward(hitBallRw);
+        }
+
+        else if (tag == "wall" || tag == "net"){
+            float touchWallRw = -1.5f;
+            // print("Toco pared");
+            AddReward(touchWallRw);
+        }
     }
+
 }
+
+
+//modificar heuristicas para q sea bien manejable
+//meter prints en recompensas
+//hacer prueba
+//terminar episodio
+
+//reestablecer cambios en movimiento
+
+//bug de posiciones random ??
+//cada vez que reinnicia toma como que pasa la red
