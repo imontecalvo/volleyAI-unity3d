@@ -18,6 +18,10 @@ public class PlayVolleyball : Agent
 
     private Vector3 initPosition;
 
+    private int ballHitsCounter;
+    private int collisionStayCounter;
+    private bool firstEpCollision;
+
     private void Start() {
         initPosition = transform.localPosition;
         rb = GetComponent<Rigidbody>();
@@ -28,17 +32,22 @@ public class PlayVolleyball : Agent
 
 
     public override void OnEpisodeBegin(){
-        transform.position = initPosition;
+        transform.localPosition = initPosition;
+        isJumping = false;
         rb.velocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
 
-        float randPosX = Random.Range(-6f,0f);
-        float randPosZ = Random.Range(-5f,5f);
+        float randPosX = Random.Range(-4f,0f);
+        float randPosZ = Random.Range(-2f,2f);
         transform.Translate(new Vector3(randPosX,0f,randPosZ));
-        print(initPosition);
+
+        // transform.localPosition = initPosition;
 
         //al comienzo del episodio cambio al valor opuesto (si el punto del ep anterior fue en mi cancha ahora la pelota aparece en el otro lado)
         ballInMyField = !ballInMyField;
+        ballHitsCounter = 0;
+        collisionStayCounter = 0;
+        firstEpCollision = true;
     }
 
     public override void CollectObservations(VectorSensor sensor){
@@ -57,7 +66,7 @@ public class PlayVolleyball : Agent
         float jump = actions.ContinuousActions[2];
 
 
-        float moveSpeed = 5f;
+        float moveSpeed = 8f;
         float jumpForce = 6.5f;
 
         Vector3 movement = new Vector3(moveX, 0f, moveZ) * moveSpeed * Time.deltaTime;
@@ -65,6 +74,7 @@ public class PlayVolleyball : Agent
 
 
         // transform.localPosition += new Vector3(moveX,0,moveZ) * Time.deltaTime * moveSpeed;
+        // if (jump>0){print("Salto - " + isJumping + gameObject.name);}
         if (!isJumping && jump > 0){
             rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
             isJumping = true;
@@ -75,14 +85,15 @@ public class PlayVolleyball : Agent
         ballInMyField = field.tag == "field1" ? ball.transform.localPosition.x < 0f : ball.transform.localPosition.x > 0f;
         if ((ballInMyField != prevBallField) && !ballInMyField){
             // print("Pasa red " + gameObject.name);
-            AddReward(15f);
+            ballHitsCounter = 0;
+            AddReward(40f);
         }
 
         // Distance to ball -> Reward [-2,2]
         if (ballInMyField){
             float MAX_DIST = 22f;
             float distanceToBall = Vector3.Distance(transform.localPosition, ball.transform.localPosition);
-            float reward = 4*((-distanceToBall/MAX_DIST)+1)-2;
+            float reward = 2*((-distanceToBall/MAX_DIST)+1)-1;
             // print("Distancia pelota " + distanceToBall + "rw: " + reward);
             AddReward(reward);
         }
@@ -108,20 +119,54 @@ public class PlayVolleyball : Agent
     private void OnCollisionEnter(Collision other){
         string tag = other.gameObject.tag;
         if (tag == "field1" || tag == "field2"){
-            isJumping = false;
+            // if (gameObject.name == "Player2"){print("Colision piso Player2");}
+            if (!firstEpCollision){
+                isJumping = false;
+            }
+            firstEpCollision = false;
+            // if (gameObject.name == "Player1"){print("Colision isJumping: " + isJumping);}
         }
 
         else if (tag == "ball"){
-            float hitBallRw = 7;
+            int hitBallRw = 1;
             // print("Golpeo pelota " + gameObject.name);
             AddReward(hitBallRw);
+            ballHitsCounter += 1;
+            //si toca mas 5 veces la pelota antes de pasarla, pierde punto (3 veces es poco)
+            if (ballHitsCounter> 5){
+                LossPoint();
+                EndEpisode();
+            }
         }
 
         else if (tag == "wall" || tag == "net"){
-            float touchWallRw = -1.5f;
+            float touchWallRw = -5f;
             // print("Toco pared");
             AddReward(touchWallRw);
         }
+    }
+
+    private void OnCollisionStay(Collision other) {
+        if (other.gameObject.tag == "ball"){
+            collisionStayCounter+=1;
+            // si se queda reteniendo la pelota, pierde punto
+            if (collisionStayCounter > 15){
+                LossPoint();
+                EndEpisode();
+            }
+        }
+    }
+
+    private void OnCollisionExit(Collision other){
+        if (other.gameObject.tag == "ball"){
+            collisionStayCounter=0;
+        }
+    }
+
+    private void LossPoint(){
+        BallCollision ballCollision = ball.GetComponent<BallCollision>();
+        ballCollision.setInitPosition(field.tag);
+        AddReward(-100);
     }
 
 }

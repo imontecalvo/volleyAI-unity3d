@@ -43,27 +43,33 @@ public class BallCollision : MonoBehaviour
         string tag = other.gameObject.tag;
         if (tag == "field1" || tag =="field2"){
 
-            float randPosX = Random.Range(0f,6f);
-            float randPosZ = Random.Range(-3f,3f);
-            float xPos = tag == "field2" ? player1InitPos.x+randPosX : player2InitPos.x-randPosX;
-            transform.localPosition = new Vector3(xPos,initPos.y,randPosZ);
-
-            rb.velocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
+            setInitPosition(tag);
 
             if (tag == "field2"){
                 // print("Pelota toca piso2");
-                playerAgent2.AddReward(-20);
-                playerAgent1.AddReward(20);
+                playerAgent2.AddReward(-100);
+                playerAgent1.AddReward(100);
                 playerAgent1.EndEpisode();
                 playerAgent2.EndEpisode();
             }else{
                 // print("Pelota toca piso1");
-                playerAgent2.AddReward(20);
-                playerAgent1.AddReward(-20);
+                playerAgent2.AddReward(100);
+                playerAgent1.AddReward(-100);
                 playerAgent1.EndEpisode();
                 playerAgent2.EndEpisode();
             }
         }
+    }
+
+    public void setInitPosition(string tag){
+        float randPosX = Random.Range(0f,3f);
+        float randPosZ = Random.Range(-1.5f,1.5f);
+        float xPos = tag == "field2" ? player1InitPos.x+randPosX : player2InitPos.x-randPosX;
+        transform.localPosition = new Vector3(xPos,initPos.y,randPosZ);
+
+        // transform.localPosition = initPos;
+
+        rb.velocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
     }
 }
