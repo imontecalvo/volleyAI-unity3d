@@ -13,6 +13,8 @@ public class PlayVolleyball : Agent
     [SerializeField] private Transform opponentTransform;
     [SerializeField] private GameObject ball;
     [SerializeField] private Transform netTransform;
+
+    [SerializeField] private  Counter oppCounter;
     bool isJumping = false;
     private Rigidbody rb;
 
@@ -164,9 +166,10 @@ public class PlayVolleyball : Agent
     }
 
     private void LossPoint(){
+        oppCounter.Point();
+        AddReward(-100);
         BallCollision ballCollision = ball.GetComponent<BallCollision>();
         ballCollision.setInitPosition(field.tag);
-        AddReward(-100);
     }
 
 }

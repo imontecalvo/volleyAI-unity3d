@@ -7,6 +7,10 @@ using Unity.MLAgents.Sensors;
 
 public class BallCollision : MonoBehaviour
 {
+    //counters
+    public Counter counterP1;
+    public Counter counterP2;
+
     //player1
     public GameObject player1;
     private Vector3 player1InitPos;
@@ -47,12 +51,13 @@ public class BallCollision : MonoBehaviour
 
             if (tag == "field2"){
                 // print("Pelota toca piso2");
+                counterP1.Point();
                 playerAgent2.AddReward(-100);
                 playerAgent1.AddReward(100);
                 playerAgent1.EndEpisode();
                 playerAgent2.EndEpisode();
             }else{
-                // print("Pelota toca piso1");
+                counterP2.Point();
                 playerAgent2.AddReward(100);
                 playerAgent1.AddReward(-100);
                 playerAgent1.EndEpisode();

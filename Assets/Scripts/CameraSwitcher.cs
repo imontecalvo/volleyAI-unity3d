@@ -31,13 +31,13 @@ public class CameraSwitcher : MonoBehaviour
             cameras[1].gameObject.SetActive(false);
         }else{
             int idx = ballTransform.localPosition.x < 0 ? 0 : 1;
-            // cameras[0].gameObject.SetActive(false);
-            // cameras[1].gameObject.SetActive(false);
-            // cameras[idx].gameObject.SetActive(true);
-
-            cameras[0].gameObject.SetActive(true);
+            cameras[0].gameObject.SetActive(false);
             cameras[1].gameObject.SetActive(false);
-            cameras[2].gameObject.SetActive(false);
+            cameras[idx].gameObject.SetActive(true);
+
+            // cameras[0].gameObject.SetActive(true);
+            // cameras[1].gameObject.SetActive(false);
+            // cameras[2].gameObject.SetActive(false);
         }
     }
 }
